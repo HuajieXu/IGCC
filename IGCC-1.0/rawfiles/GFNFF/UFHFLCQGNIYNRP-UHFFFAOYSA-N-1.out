@@ -1,0 +1,141 @@
+ 
+       ╔════════════════════════════════════════════╗
+       ║            ___ ___ ___ ___ _____           ║
+       ║           / __| _ \ __/ __|_   _|          ║
+       ║          | (__|   / _|\__ \ | |            ║
+       ║           \___|_|_\___|___/ |_|            ║
+       ║                                            ║
+       ║  Conformer-Rotamer Ensemble Sampling Tool  ║
+       ║          based on the xTB methods          ║
+       ║                                            ║
+       ╚════════════════════════════════════════════╝
+       Version 3.0.2, Sun Aug 25 20:02:36 UTC 2024
+       commit (af7eb99) compiled by 'runner@fv-az1984-471'
+ 
+   Cite work conducted with this code as
+
+   • P.Pracht, F.Bohle, S.Grimme, PCCP, 2020, 22, 7169-7192.
+   • S.Grimme, JCTC, 2019, 15, 2847-2862.
+   • P.Pracht, S.Grimme, C.Bannwarth, F.Bohle, S.Ehlert,
+     G.Feldmann, J.Gorges, M.Müller, T.Neudecker, C.Plett,
+     S.Spicher, P.Steinbach, P.Wesołowski, F.Zeller,
+     J. Chem. Phys., 2024, 160, 114110.
+
+   for works involving QCG cite
+
+   • S.Spicher, C.Plett, P.Pracht, A.Hansen, S.Grimme,
+     JCTC, 2022, 18 (5), 3174-3189.
+   • C.Plett, S. Grimme,
+     Angew. Chem. Int. Ed. 2023, 62, e202214477.
+
+   for works involving MECP screening cite
+
+   • P.Pracht, C.Bannwarth, JCTC, 2022, 18 (10), 6370-6385.
+ 
+   Original code
+     P.Pracht, S.Grimme, Universität Bonn, MCTC
+   with help from (alphabetical order):
+     C.Bannwarth, F.Bohle, S.Ehlert, G.Feldmann, J.Gorges,
+     S.Grimme, C.Plett, P.Pracht, S.Spicher, P.Steinbach,
+     P.Wesolowski, F.Zeller
+ 
+   Online documentation is available at
+   https://crest-lab.github.io/crest-docs/
+ 
+   This program is distributed in the hope that it will be useful,
+   but WITHOUT ANY WARRANTY; without even the implied warranty of
+   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+   GNU Lesser General Public License (LGPL) for more details.
+
+ Command line input:
+ $ crest UFHFLCQGNIYNRP-UHFFFAOYSA-N-1.xyz -gfnff -entropy -T 16 -chrg 0 -uhf 0
+
+  --gfnff : Use of GFN-FF requested.
+  -entropy : enhanced ensemble entropy calculation
+  -T 16 (CPUs/Threads selected)
+  -chrg 0
+  -uhf 0
+Parsing xtb-type input file bondlengths to set up calculators ...
+
+> Setting up backup calculator ... done.
+ ----------------
+ Calculation info
+ ----------------
+> User-defined calculation level:
+ : GFN-FF calculation via GFNFF lib
+ :   Molecular charge    : 0
+ 
+> User-defined constraints:
+> constraint: distance atoms: 1,2
+  d(AA)=     0.76453 k= 0.02000
+ 
+ 
+ -----------------------------
+ Initial Geometry Optimization
+ -----------------------------
+ Geometry successfully optimized.
+ 
+          ┍━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┑
+          │              CREST ENTROPY SAMPLING             │
+          ┕━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┙
+ 
+ please cite:
+ • P.Pracht, S.Grimme, Chem. Sci., 2021, 12, 6551-6568.
+ • J.Gorges, S.Grimme, A.Hansen, P.Pracht, PCCP, 2022,24, 12249-12259.
+ 
+ Input structure:
+  2
+ 
+ H          0.3890456298        0.0000000000        0.0000000000
+ H         -0.3890456298        0.0000000000        0.0000000000
+ 
+ input  file name : crest_rotamers.xyz
+ output file name : crest_rotamers.xyz.sorted
+ sorting energy window (EWIN)   :   +∞ / kcal*mol⁻¹
+ reference state Etot           : -0.163847630000000     
+ 
+=====================================================
+============== ordered structure list ===============
+=====================================================
+ written to file <crest_rotamers.xyz.sorted>
+ 
+ structure      ΔE(kcal/mol)                 Etot(Eh)
+         1            0.0000            -0.1638476300
+ 
+ 
+******************************************************************************************
+**                           ENSEMBLE ENTROPY CALCULATION                               **
+******************************************************************************************
+ Note: di- or monoatomic molecules have no conformational entropy
+ 
+ ----------------------------------------------------
+ |      FINAL MOLECULAR ENTROPY AT T= 298.15 K      |
+ ----------------------------------------------------
+     Sconf   =          0.000000
+   + δSrrho  =          0.000000
+ -----------------------------------------------------
+ = S(total)  =          0.000000  (cal mol⁻¹ K⁻¹)
+ 
+   H(T)-H(0) =          0.000000
+   G         =          0.000000   (-T*S)
+ -----------------------------------------------------
+ = G(total)  =          0.000000  (H-T*S) (kcal mol⁻¹)
+ 
+   Cp(total) =          0.000000  (cal mol⁻¹ K⁻¹)
+ 
+ 
+ -----------------
+ Wall Time Summary
+ -----------------
+ CREST runtime (total)               0 d,  0 h,  0 min,  0.021 sec
+ ------------------------------------------------------------------
+ Conf. entropy evaluation   ...        0 min,  0.000 sec (  0.100%)
+ I/O and setup              ...        0 min,  0.021 sec ( 99.900%)
+ ------------------------------------------------------------------
+ * wall-time:     0 d,  0 h,  0 min,  0.021 sec
+ *  cpu-time:     0 d,  0 h,  0 min,  0.008 sec
+ * ratio c/w:     0.384 speedup
+ ------------------------------------------------------------------
+ * Total number of energy+grad calls: 5
+ 
+ CREST terminated normally.
