@@ -13,8 +13,8 @@ from pandas import DataFrame, read_csv
 from rdkit.Chem import rdMolDescriptors
 from configparser import RawConfigParser
 
-from igcc._basic import Basic
-from igcc._CBH import CBH
+from tdoc._basic import Basic
+from tdoc._CBH import CBH
 
 import logging
 
@@ -31,16 +31,16 @@ class Parameters():
     @lru_cache(maxsize=128)
     def get_smiles(self):
         smiles, species_dict, micro_mol, macro_mol = [], {}, set(), set()
-        IGCC_vacant, IGCC_vacant_smiles, mBAC_vacant, mBAC_vacant_smiles = {}, [], {}, []
+        BDC_vacant, BDC_vacant_smiles, BAC_vacant, BAC_vacant_smiles = {}, [], {}, []
 
-        if exists(f"{self.para['work_path']}/training_smiles.txt"):
-            with open(f"{self.para['work_path']}/training_smiles.txt") as f:
+        if exists(f"{self.para['work_path']}/given_micro_smiles.txt"):
+            with open(f"{self.para['work_path']}/given_micro_smiles.txt") as f:
                 for x in f.readlines()[1:]:
                     if x.strip():
                         species, smi = x.strip().split()
                         cal_smi, std_smi, inc = self.basic.smi_to_std_format(smi)
                         micro_mol.add(std_smi)
-                        self.para['training_smiles'].add(std_smi)
+                        self.para['given_micro_smiles'].add(std_smi)
 
         with open(f"{self.para['work_path']}/{self.para['input_file']}") as f:
             for x in tqdm(f.read().strip().split('\n')[1:], desc='Reading smiles information'):
@@ -50,73 +50,73 @@ class Parameters():
                     formula = rdMolDescriptors.CalcMolFormula(Chem.MolFromSmiles(cal_smi))
                     smiles.append(std_smi)
 
-                    reac, prod, CBH_reaction = self.CBH.get_CBH_reactions(std_smi, 3)
+                    reac, prod, IGCC_reaction = self.CBH.get_CBH_reactions(std_smi, 3)
 
                     species_dict.setdefault('species', []).append(species)
                     species_dict.setdefault('inchikey', []).append(inc)
                     species_dict.setdefault('formula', []).append(formula)
                     species_dict.setdefault('smiles', []).append(std_smi)
                     species_dict.setdefault('standard_smiles', []).append(std_smi)
-                    species_dict.setdefault('CBH_reaction', []).append(CBH_reaction)
+                    species_dict.setdefault('IGCC_reaction', []).append(IGCC_reaction)
                     
                     if reac != prod:
                         macro_mol.add(std_smi), micro_mol.update(set(reac + prod - Counter([std_smi])))
 
-                        if self.para['check_mBAC_IGCC_smiles']:
+                        if self.para['check_BAC_BDC_smiles']:
 
-                            # Process IGCC parameters.
-                            IGCC_bonds = self.CBH.get_CBH_delta_bonds(std_smi, 3)[-1]
+                            # Process BDC parameters.
+                            BDC_bonds = self.CBH.get_CBH_delta_bonds(std_smi, 3)[-1]
 
-                            for IGCC_bond in IGCC_bonds:
-                                if IGCC_bond not in self.para['IGCC_parameters']:
+                            for BDC_bond in BDC_bonds:
+                                if BDC_bond not in self.para['BDC_parameters']:
 
-                                    IGCC_smi = self.CBH.bond_smi_to_mole_smi(IGCC_bond, 'high')
+                                    BDC_smi = self.CBH.bond_smi_to_mole_smi(BDC_bond, 'high')
 
-                                    if IGCC_smi:
-                                        bonds = self.CBH.get_bonds_count(IGCC_smi, 3)
+                                    if BDC_smi:
+                                        bonds = self.CBH.get_bonds_count(BDC_smi, 3)
 
-                                        if IGCC_bond == IGCC_smi or IGCC_bond in bonds:
-                                            ref_cal_smi = self.basic.smi_to_std_format(IGCC_smi)[0]
+                                        if BDC_bond == BDC_smi or BDC_bond in bonds:
+                                            ref_cal_smi = self.basic.smi_to_std_format(BDC_smi)[0]
                                             std_mol, ref_mol = Chem.MolFromSmiles(std_smi), Chem.MolFromSmiles(ref_cal_smi)
                                         
                                             if std_mol.GetNumHeavyAtoms() - ref_mol.GetNumHeavyAtoms() > 4:
-                                                ref_smi = IGCC_smi
+                                                ref_smi = BDC_smi
                                             else:
                                                 ref_smi = std_smi
                                         else:
                                             ref_smi = std_smi
                                     else:
                                         ref_smi = std_smi
-                                    IGCC_vacant.setdefault(IGCC_bond, set()).add(ref_smi)
+                                    BDC_vacant.setdefault(BDC_bond, set()).add(ref_smi)
                     
                     else:
                         micro_mol.add(std_smi)
 
-                    if self.para['check_mBAC_IGCC_smiles']:
-                        # Process mBAC parameters.
+                    if self.para['check_BAC_BDC_smiles']:
+                        # Process BAC parameters.
                         all_smiles = set(list(reac) + list(prod))
                         for smi in all_smiles:
                             cal_smi, std_smi, inc = self.basic.smi_to_std_format(smi)
-                            mBAC_bonds = self.CBH.get_mBAC_bonds(smi)
+                            BAC_bonds = self.CBH.get_BAC_bonds(smi)
 
-                            for mBAC_bond in mBAC_bonds:
-                                if mBAC_bond not in self.para['mBAC_parameters']:
+                            for BAC_bond in BAC_bonds:
+                                if BAC_bond not in self.para['BAC_parameters']:
                                     ref_smi = std_smi
-                                    mBAC_vacant.setdefault(mBAC_bond, set()).add(ref_smi)
-                                    print(mBAC_bond, std_smi)
+                                    BAC_vacant.setdefault(BAC_bond, set()).add(ref_smi)
+                                    print(BAC_bond, std_smi)
 
-        # To determine the referenced molecule for the IGCC paramters.
-        for k, v in IGCC_vacant.items():
+        # To determine the referenced molecule for the BDC paramters.
+        for k, v in BDC_vacant.items():
             ref_smi = sorted(v, key=lambda x: self.basic.get_all_atoms(x))[0]
-            IGCC_vacant_smiles.append(ref_smi)
+            BDC_vacant_smiles.append(ref_smi)
 
-        # To determine the referenced molecule for the mBAC paramters.
-        for k, v in mBAC_vacant.items():
+        # To determine the referenced molecule for the BAC paramters.
+        for k, v in BAC_vacant.items():
             ref_smi = sorted(v, key=lambda x: self.basic.get_all_atoms(x))[0]
-            mBAC_vacant_smiles.append(ref_smi)
+            BAC_vacant_smiles.append(ref_smi)
         
         # To get all SMILES for the whole system.
-        smiles = list(set([self.basic.smi_to_std_format(x)[1] for x in smiles + list(micro_mol) + list(macro_mol) + mBAC_vacant_smiles + IGCC_vacant_smiles]))
+        smiles = list(set([self.basic.smi_to_std_format(x)[1] for x in smiles + list(micro_mol) + list(macro_mol) + BAC_vacant_smiles + BDC_vacant_smiles]))
         smiles = sorted(smiles, key=lambda x: self.basic.get_all_atoms(x))
 
         # To sort all data list by inchikeys.
@@ -156,31 +156,31 @@ class Parameters():
         DataFrame(species_dict).to_csv(f"{format(self.para['work_path'])}/csvfiles/input_data.csv", index=False)
         DataFrame(list(self.para['species'].items())).to_csv(f"{format(self.para['work_path'])}/csvfiles/all_smiles.csv", index=False, header = ['inchikey', 'standard_smiles'])
         
-        # To process the vacant smiles for IGCC and mBAC parameters.
-        if IGCC_vacant_smiles:
-            print(f"\n{' Missing IGCC parameters! ':#^64}\n")
-            IGCC_vacant_smiles = sorted(set(IGCC_vacant_smiles), key=lambda x: self.basic.get_all_atoms(x))
+        # To process the vacant smiles for BDC and BAC parameters.
+        if BDC_vacant_smiles:
+            print(f"\n{' Missing BDC parameters! ':#^64}\n")
+            BDC_vacant_smiles = sorted(set(BDC_vacant_smiles), key=lambda x: self.basic.get_all_atoms(x))
             
-            with open(f"{self.para['work_path']}/IGCC_training.txt", 'w') as f:
+            with open(f"{self.para['work_path']}/BDC_training.txt", 'w') as f:
                 f.write(f"{'S/N':>6}{'Train_smiles':>64}\n")
-                for i, v in enumerate(IGCC_vacant_smiles):
+                for i, v in enumerate(BDC_vacant_smiles):
                     f.write(f'{i+1:>6}{v:>64}\n')
-                    self.para['training_smiles'].add(v)
+                    self.para['given_micro_smiles'].add(v)
 
         else:
-            if exists(f"{self.para['work_path']}/IGCC_training.txt"):
-                remove(f"{self.para['work_path']}/IGCC_training.txt")
+            if exists(f"{self.para['work_path']}/BDC_training.txt"):
+                remove(f"{self.para['work_path']}/BDC_training.txt")
 
-        if mBAC_vacant_smiles:
-            print(f"\n{' Missing mBAC parameters! ':#^64}\n")
-            mBAC_vacant_smiles = sorted(set(mBAC_vacant_smiles), key=lambda x: self.basic.get_all_atoms(x))
-            with open(f"{self.para['work_path']}/mBAC_training.txt", 'w') as f:
+        if BAC_vacant_smiles:
+            print(f"\n{' Missing BAC parameters! ':#^64}\n")
+            BAC_vacant_smiles = sorted(set(BAC_vacant_smiles), key=lambda x: self.basic.get_all_atoms(x))
+            with open(f"{self.para['work_path']}/BAC_training.txt", 'w') as f:
                 f.write(f"{'S/N':>6}{'Train_smiles':>64}\n")
-                for i, v in enumerate(mBAC_vacant_smiles):
+                for i, v in enumerate(BAC_vacant_smiles):
                     f.write(f'{i+1:>6}{v:>64}\n')
         else:
-            if exists(f"{self.para['work_path']}/mBAC_training.txt"):
-                remove(f"{self.para['work_path']}/mBAC_training.txt")
+            if exists(f"{self.para['work_path']}/BAC_training.txt"):
+                remove(f"{self.para['work_path']}/BAC_training.txt")
 
 
     """ To get input parameters. """
@@ -196,19 +196,19 @@ class Parameters():
         self.para.update({k: eval(v) for k, v in config.items('server_parameters')})
         self.para.update({k: eval(v) for k, v in config.items('default_parameters')})
 
-        self.para.update({'training_smiles':set()})
+        self.para.update({'given_micro_smiles':set()})
         
-        if exists(f"{self.para['work_path']}/mBAC_parameters.txt"):
-            with open(f"{self.para['work_path']}/{'mBAC_parameters.txt'}") as f:
-                self.para.update({'mBAC_parameters': eval(f.read())})
+        if exists(f"{self.para['work_path']}/BAC_parameters.txt"):
+            with open(f"{self.para['work_path']}/{'BAC_parameters.txt'}") as f:
+                self.para.update({'BAC_parameters': eval(f.read())})
         else:
-            self.para.update({'mBAC_parameters':{}})
+            self.para.update({'BAC_parameters':{}})
 
-        if exists(f"{self.para['work_path']}/IGCC_parameters.txt"):
-            with open(f"{self.para['work_path']}/{'IGCC_parameters.txt'}") as f:
-                self.para.update({'IGCC_parameters': eval(f.read())})
+        if exists(f"{self.para['work_path']}/BDC_parameters.txt"):
+            with open(f"{self.para['work_path']}/{'BDC_parameters.txt'}") as f:
+                self.para.update({'BDC_parameters': eval(f.read())})
         else:
-            self.para.update({'IGCC_parameters':{}})
+            self.para.update({'BDC_parameters':{}})
 
         if exists(f"{self.para['work_path']}/same_inchikey.txt"):
             with open(f"{self.para['work_path']}/same_inchikey.txt") as f:
@@ -218,12 +218,11 @@ class Parameters():
 
         if exists(f"{self.para['work_path']}/geometry_state.txt"):
             with open(f"{self.para['work_path']}/geometry_state.txt") as f:
-                self.para.setdefault('geometry_state', {})
                 for line in f.readlines()[1:]:
                     if line.strip():
                         _, inc, tar_smi, cur_smi, state = line.split()
                         if exists(f"{self.para['work_path']}/rawfiles/B3LYP/{inc}.out"):
-                            self.para['geometry_state'].update({inc: [tar_smi, cur_smi, state]})
+                            self.para.setdefault('geometry_state', {}).update({inc: [tar_smi, cur_smi, state]})
         else:
             self.para.update({'geometry_state':{}})
 
@@ -249,7 +248,7 @@ class Parameters():
         if exists(f"{self.para['work_path']}/subfiles"):
             rmtree(f"{self.para['work_path']}/subfiles", True)
 
-        if exists(f"{self.para['work_path']}/mBAC"):
+        if exists(f"{self.para['work_path']}/BAC"):
             rmtree(f"{self.para['work_path']}/subfiles", True)
 
         if exists(f"{self.para['work_path']}/subfiles"):
