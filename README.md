@@ -1,5 +1,5 @@
 ## IGCC-1.0:
-IGCC: Isodesmic Group Contribution Compensation 
+IGCC: Isodesmic-Based Group Contribution Compensation 
 
 Date: August 30, 2025.
 
@@ -55,3 +55,4 @@ of all thermodynamic data generally meets the requirements of chemical accuracy.
 6. rawfiles: The output directory to deposit input and output files of QM calculations for Linux system.
 7. csvfiles: The result directory to contain some summary analysis and overall data files for species.
 8. subfiles: The submitted directory for QM calculations on Linux system. It will be removed if all data are completed.
+
