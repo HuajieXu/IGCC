@@ -239,7 +239,6 @@ def get_fitted_parameters(input_data):
 
 def write_IGCC_parameters(bond_parameters):
     with open('IGCC_parameters.txt','w') as f:
-        print(bond_parameters)
         f.write(str(bond_parameters))
 
     if replace_model == 1:
@@ -281,3 +280,4 @@ if __name__ == '__main__':
     write_IGCC_parameters(bond_parameters)
 
     print('# 5: Exiting current program.\n')
+
